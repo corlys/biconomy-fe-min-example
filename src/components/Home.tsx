@@ -84,13 +84,13 @@ export default function Home() {
   async function login() {
     if (!sdkRef.current) {
       const socialLoginSDK = new SocialLogin()
-      const signature1 = await socialLoginSDK.whitelistUrl("http://127.0.0.1:3000/")
+      //const signature1 = await socialLoginSDK.whitelistUrl("http://127.0.0.1:3000/")
       const signature2 = await socialLoginSDK.whitelistUrl("https://biconomy-fe-min-example.vercel.app/")
       await socialLoginSDK.init({
         chainId: ethers.utils.hexValue(ChainId.POLYGON_MUMBAI).toString(),
         network: "testnet",
         whitelistUrls: {
-          "http://127.0.0.1:3000/": signature1,
+          //"http://127.0.0.1:3000/": signature1,
           "https://biconomy-fe-min-example.vercel.app/": signature2
         }
       })
