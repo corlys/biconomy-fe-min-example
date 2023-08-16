@@ -1,13 +1,11 @@
 import Head from "next/head";
-import Link from "next/link";
 import { toast } from 'react-toastify'
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useState, useEffect, useRef } from 'react'
 import SocialLogin from "@biconomy/web3-auth"
 import { ChainId } from "@biconomy/core-types";
-import { IBundler, Bundler } from '@biconomy/bundler'
-import { BiconomySmartAccount, BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS } from "@biconomy/account"
-import { IPaymaster, BiconomyPaymaster, IHybridPaymaster, SponsorUserOperationDto, PaymasterMode } from '@biconomy/paymaster'
+import { Bundler } from '@biconomy/bundler'
+import { BiconomySmartAccount, type BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS } from "@biconomy/account"
+import { BiconomyPaymaster, type IHybridPaymaster, SponsorUserOperationDto, PaymasterMode } from '@biconomy/paymaster'
 import { ethers, BigNumber } from "ethers";
 
 const bundler = new Bundler({
@@ -38,7 +36,7 @@ export default function Home() {
     if (interval) {
       const configureLogin = setInterval(() => {
         if (!!sdkRef.current?.provider) {
-          setupSmartAccount();
+          void setupSmartAccount();
           clearInterval(configureLogin)
         }
       }, 1000)
@@ -48,7 +46,7 @@ export default function Home() {
   useEffect(() => {
 
     if (provider) {
-      getCount()
+      void getCount()
     }
 
   }, [provider])
@@ -100,8 +98,12 @@ export default function Home() {
       sdkRef.current.showWallet()
       enableInterval(true)
     } else {
-      setupSmartAccount()
+      await setupSmartAccount()
     }
+  }
+
+  const handleLogin = () => {
+    void login();
   }
 
   const logout = async () => {
@@ -113,6 +115,10 @@ export default function Home() {
     sdkRef.current.hideWallet()
     setSmartAccount(null)
     enableInterval(false)
+  }
+
+  const handleLogout = () => {
+    void logout();
   }
 
   function formatEthereumAddress(address: string) {
@@ -150,11 +156,11 @@ export default function Home() {
         data: data,
       };
 
-      let partialUserOp = await smartAccount.buildUserOp([tx1]);
+      const partialUserOp = await smartAccount.buildUserOp([tx1]);
 
       const biconomyPaymaster = smartAccount.paymaster as IHybridPaymaster<SponsorUserOperationDto>;
 
-      let paymasterServiceData: SponsorUserOperationDto = {
+      const paymasterServiceData: SponsorUserOperationDto = {
         mode: PaymasterMode.SPONSORED,
         // optional params...
       };
@@ -225,6 +231,10 @@ export default function Home() {
     }
   };
 
+  const handleIncrementCount = () => {
+    void incrementCount();
+  }
+
   const getCount = async () => {
     try {
       if (!provider) throw Error('Provider is null when reading count');
@@ -232,7 +242,7 @@ export default function Home() {
       const count: BigNumber = await contract.count();
       setCount(count)
     } catch (error) {
-      console.log(`Error when getting count ${error}`)
+      console.error("Error executing call:", error);
     }
   }
 
@@ -262,14 +272,14 @@ export default function Home() {
                   <div className="text-lg">
                     Connect Your Wallet Here
                   </div>
-                  <button onClick={login} className="py-4 px-6 text-white bg-gray-800 border rounded-xl border-purple-700">Login</button>
+                  <button onClick={handleLogin} className="py-4 px-6 text-white bg-gray-800 border rounded-xl border-purple-700">Login</button>
                 </>
               }
               {
                 smartAccount && !loading &&
                 <>
                   <h3 className="text-2xl font-bold">Hello Smart Account Owner {formatEthereumAddress(smartAccount.owner)}</h3>
-                  <button onClick={logout} className="py-4 px-6 text-white bg-gray-800 border rounded-xl border-purple-700">Logout</button>
+                  <button onClick={handleLogout} className="py-4 px-6 text-white bg-gray-800 border rounded-xl border-purple-700">Logout</button>
                 </>
               }
             </div>
@@ -281,7 +291,7 @@ export default function Home() {
                 smartAccount ?
                   <>
                     <h2>Count = {count.toString()}</h2>
-                    <button onClick={incrementCount} disabled={scLoading} className={`py-4 px-6 text-white ${scLoading ? "bg-gray-500 cursor-not-allowed" : "bg-gray-800"} border rounded-xl border-purple-700`}>Increment Count</button>
+                    <button onClick={handleIncrementCount} disabled={scLoading} className={`py-4 px-6 text-white ${scLoading ? "bg-gray-500 cursor-not-allowed" : "bg-gray-800"} border rounded-xl border-purple-700`}>Increment Count</button>
                   </>
                   :
                   <>
