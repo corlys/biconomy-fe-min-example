@@ -2,6 +2,7 @@ import Head from "next/head";
 import { toast } from 'react-toastify'
 import { useState, useEffect, useRef } from 'react'
 import SocialLogin from "@biconomy/web3-auth"
+import { ParticleProvider, ParticleAuthModule } from '@biconomy/particle-auth';
 import { ChainId } from "@biconomy/core-types";
 import { Bundler } from '@biconomy/bundler'
 import { BiconomySmartAccount, type BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS } from "@biconomy/account"
@@ -85,13 +86,13 @@ export default function Home() {
     if (!sdkRef.current) {
       const socialLoginSDK = new SocialLogin()
       //const signature1 = await socialLoginSDK.whitelistUrl("http://127.0.0.1:3000/")
-      const signature2 = await socialLoginSDK.whitelistUrl("https://biconomy-fe-min-example.vercel.app/")
+      const signature2 = await socialLoginSDK.whitelistUrl("https://biconomy-fe-min-example.vercel.app")
       await socialLoginSDK.init({
         chainId: ethers.utils.hexValue(ChainId.POLYGON_MUMBAI).toString(),
         network: "testnet",
         whitelistUrls: {
           //"http://127.0.0.1:3000/": signature1,
-          "https://biconomy-fe-min-example.vercel.app/": signature2
+          "https://biconomy-fe-min-example.vercel.app": signature2
         }
       })
       sdkRef.current = socialLoginSDK
