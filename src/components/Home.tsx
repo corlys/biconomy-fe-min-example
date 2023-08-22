@@ -8,6 +8,7 @@ import { Bundler } from '@biconomy/bundler'
 import { BiconomySmartAccount, type BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS } from "@biconomy/account"
 import { BiconomyPaymaster, type IHybridPaymaster, SponsorUserOperationDto, PaymasterMode } from '@biconomy/paymaster'
 import { ethers, BigNumber } from "ethers";
+import { useSessionStorage } from "usehooks-ts";
 
 const bundler = new Bundler({
   bundlerUrl: 'https://bundler.biconomy.io/api/v2/80001/nJPK7B3ru.dd7f7861-190d-41bd-af80-6877f74b8f44',
@@ -33,6 +34,7 @@ export default function Home() {
   const [scLoading, setScLoading] = useState(false)
   const [loginLoading, setLoginLoading] = useState(false)
   const [count, setCount] = useState(BigNumber.from('0'));
+  const [loggedIn, setLoggedIn] = useSessionStorage('loggedIn', false);
 
   useEffect(() => {
     if (interval) {
@@ -54,11 +56,10 @@ export default function Home() {
   }, [provider])
 
   useEffect(() => {
-
-    console.log("zap", loading, !!smartAccount)
-
-  }, [loading, smartAccount])
-
+    if (loggedIn) {
+      handleLogin();
+    }
+  }, [loggedIn])
 
   async function setupSmartAccount() {
     if (!sdkRef?.current?.provider) return
@@ -81,7 +82,7 @@ export default function Home() {
       console.log("owner: ", biconomySmartAccount.owner)
       console.log("address: ", await biconomySmartAccount.getSmartAccountAddress())
       console.log("deployed: ", await biconomySmartAccount.isAccountDeployed(await biconomySmartAccount.getSmartAccountAddress()))
-
+      setLoggedIn(true)
       setSmartAccount(biconomySmartAccount)
       setLoading(false)
     } catch (err) {
@@ -93,6 +94,7 @@ export default function Home() {
     console.log('setloginloading true')
     setLoginLoading(true)
     if (!sdkRef.current) {
+      console.log('init socialLogin')
       const socialLoginSDK = new SocialLogin()
       const signature1 = await socialLoginSDK.whitelistUrl("http://127.0.0.1:3000")
       const signature2 = await socialLoginSDK.whitelistUrl("https://biconomy-fe-min-example.vercel.app")
@@ -129,6 +131,7 @@ export default function Home() {
     sdkRef.current.hideWallet()
     setSmartAccount(null)
     enableInterval(false)
+    setLoggedIn(false)
   }
 
   const handleLogout = () => {
