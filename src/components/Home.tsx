@@ -5,7 +5,7 @@ import SocialLogin from "@biconomy/web3-auth"
 import { ParticleProvider, ParticleAuthModule } from '@biconomy/particle-auth';
 import { ChainId } from "@biconomy/core-types";
 import { Bundler } from '@biconomy/bundler'
-import { BiconomySmartAccount, type BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS } from "@biconomy/account"
+import { BiconomySmartAccount, type BiconomySmartAccountConfig, DEFAULT_ENTRYPOINT_ADDRESS, } from "@biconomy/account"
 import { BiconomyPaymaster, type IHybridPaymaster, SponsorUserOperationDto, PaymasterMode } from '@biconomy/paymaster'
 import { ethers, BigNumber } from "ethers";
 import { useSessionStorage } from "usehooks-ts";
@@ -20,13 +20,55 @@ const paymaster = new BiconomyPaymaster({
   paymasterUrl: "https://paymaster.biconomy.io/api/v1/80001/4ES6g0ZzL.358e7a5b-7a00-4785-b959-db4216ce0a04"
 })
 
-const COUNTER_ADDRESS = "0x47fb1243526134eb413626a6f513811a452d817d"
-
-const ABI = [{ "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "newCount", "type": "uint256" }], "name": "updateCount", "type": "event" }, { "inputs": [], "name": "count", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "incrementCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" }]
+//const COUNTER_ADDRESS = "0x47fb1243526134eb413626a6f513811a452d817d"
+const COUNTER_ADDRESS = "0xc2D60bec2fb5d45886600d86540de0611ff7572d"
+//const ABI = [{ "anonymous": false, "inputs": [{ "indexed": false, "internalType": "uint256", "name": "newCount", "type": "uint256" }], "name": "updateCount", "type": "event" }, { "inputs": [], "name": "count", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "incrementCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "nonpayable", "type": "function" }]
+const ABI = [
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateCount",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "count",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "incrementCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
 
 export default function Home() {
 
   const [smartAccount, setSmartAccount] = useState<BiconomySmartAccount | null>(null)
+  const [smartAccountAddress, setSmartAccountAddress] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [interval, enableInterval] = useState(false)
   const sdkRef = useRef<SocialLogin | null>(null)
@@ -84,6 +126,7 @@ export default function Home() {
       console.log("deployed: ", await biconomySmartAccount.isAccountDeployed(await biconomySmartAccount.getSmartAccountAddress()))
       setLoggedIn(true)
       setSmartAccount(biconomySmartAccount)
+      setSmartAccountAddress(await biconomySmartAccount.getSmartAccountAddress())
       setLoading(false)
     } catch (err) {
       console.log('error setting up smart account... ', err)
@@ -190,10 +233,11 @@ export default function Home() {
         const transactionDetails = await userOpResponse.wait();
 
         console.log("Transaction Details:", transactionDetails);
-        console.log("Transaction Hash:", userOpResponse.userOpHash);
+        console.log("Transaction Hash:", transactionDetails.logs[0]?.transactionHash);
+        console.log("Transaction opHash:", userOpResponse.userOpHash);
 
         toast.update(toastId, {
-          render: `Transaction Hash: ${userOpResponse.userOpHash}`,
+          render: `Transaction Hash: ${transactionDetails.logs[0]?.transactionHash}`,
           type: 'success',
           isLoading: false,
           position: "top-right",
@@ -307,9 +351,10 @@ export default function Home() {
                 </>
               }
               {
-                smartAccount && !loading &&
+                smartAccount && !loading && smartAccountAddress &&
                 <>
-                  <h3 className="text-2xl font-bold">Hello Smart Account Owner {formatEthereumAddress(smartAccount.owner)}</h3>
+                  <h3 className="text-2xl font-bold">Smart Account Address {formatEthereumAddress(smartAccountAddress)}</h3>
+                  <h3 className="text-2xl font-bold">Smart Account Owner {formatEthereumAddress(smartAccount.owner)}</h3>
                   <button onClick={handleLogout} className="py-4 px-6 text-white bg-gray-800 border rounded-xl border-purple-700">Logout</button>
                 </>
               }
@@ -328,7 +373,7 @@ export default function Home() {
               }
             </div>
             <div
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
+              className="flex max-w-xs flex-col justify-between gap-4 rounded-xl bg-white/10 p-4 text-white hover:bg-white/20"
             >
               <h3 className="text-2xl font-bold">SmartContract→</h3>
               {
